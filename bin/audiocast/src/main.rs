@@ -11,11 +11,14 @@ use std::time::Duration;
 
 use audio_adapter::AudioHandle;
 use bff::{AppState, AudioStreamProvider};
-use config::Config;
+use config::{Backend, Config};
 use domain::{
     AudioFormat, CastController, CastSession, DeviceDiscovery, StreamUrl,
 };
-use infrastructure::{InMemoryCastController, StaticDiscovery, SyntheticAudioStream};
+use infrastructure::{
+    InMemoryCastController, MdnsDiscovery, RustCastController, StaticDiscovery,
+    SyntheticAudioStream,
+};
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
 
@@ -35,11 +38,23 @@ async fn main() -> anyhow::Result<()> {
         bits_per_sample: 16,
     };
 
-    // Adapters (fakes in Chunk B).
+    // Audio is the synthetic tone until the cpal capture lands (Chunk D).
     let audio = SyntheticAudioStream::start(format);
-    let cast: Arc<dyn CastController> = Arc::new(InMemoryCastController::new());
-    let discovery: Arc<dyn DeviceDiscovery> = Arc::new(StaticDiscovery::new());
     let audio_provider: Arc<dyn AudioStreamProvider> = Arc::new(AudioHandle(audio));
+
+    // Control + discovery: fakes, or real rust_cast/mdns, per config.
+    let (cast, discovery): (Arc<dyn CastController>, Arc<dyn DeviceDiscovery>) =
+        match config.backend {
+            Backend::Fake => (
+                Arc::new(InMemoryCastController::new()),
+                Arc::new(StaticDiscovery::new()),
+            ),
+            Backend::Live => (
+                Arc::new(RustCastController::new()),
+                Arc::new(MdnsDiscovery::new()),
+            ),
+        };
+    tracing::info!(backend = ?config.backend, "adapter backend");
 
     let stream_url = build_stream_url(&config);
     tracing::info!(%stream_url, "audio stream url");

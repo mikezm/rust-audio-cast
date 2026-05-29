@@ -12,3 +12,5 @@ async-trait = { workspace = true }
 tokio = { workspace = true }
 bytes = { workspace = true }
 tracing = { workspace = true }
+rust_cast = "0.21.0"
+mdns-sd = "0.20.0"
