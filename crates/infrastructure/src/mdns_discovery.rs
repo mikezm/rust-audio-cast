@@ -44,11 +44,18 @@ fn browse(timeout: Duration) -> Result<Vec<DiscoveredDevice>, DomainError> {
         }
         match receiver.recv_timeout(remaining) {
             Ok(ServiceEvent::ServiceResolved(info)) => {
+                tracing::info!(fullname = %info.get_fullname(), "mdns: resolved");
                 if let Some(device) = to_device(&info) {
                     found.insert(device.id.as_str().to_string(), device);
                 }
             }
-            Ok(_) => {}
+            Ok(ServiceEvent::ServiceFound(_, fullname)) => {
+                tracing::info!(%fullname, "mdns: found (awaiting resolve)");
+            }
+            Ok(ServiceEvent::SearchStarted(ty)) => {
+                tracing::debug!(%ty, "mdns: search started");
+            }
+            Ok(other) => tracing::debug!(?other, "mdns: other event"),
             // Timeout or the browse channel closed: we're done collecting.
             Err(_) => break,
         }
