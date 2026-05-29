@@ -1,0 +1,12 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+
+# Local config / secrets (keep config.toml sample tracked if desired)
+/config.local.toml
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
