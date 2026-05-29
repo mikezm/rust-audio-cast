@@ -1,6 +1,12 @@
 [workspace]
 resolver = "2"
-members = ["crates/domain", "crates/application"]
+members = [
+    "crates/domain",
+    "crates/application",
+    "crates/infrastructure",
+    "crates/bff",
+    "bin/audiocast",
+]
 
 [workspace.package]
 edition = "2021"
@@ -11,4 +17,24 @@ repository = "https://github.com/mikezm/rust-audio-cast"
 async-trait = "0.1"
 thiserror = "2"
 mockall = "0.13"
-tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }
+tokio = { version = "1", features = [
+    "macros",
+    "rt",
+    "rt-multi-thread",
+    "net",
+    "time",
+    "sync",
+    "signal",
+] }
+axum = "0.8"
+tower-http = { version = "0.6", features = ["fs", "cors"] }
+bytes = "1"
+futures = "0.3"
+tokio-stream = { version = "0.1", features = ["sync"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+toml = "0.8"
+local-ip-address = "0.6"
+anyhow = "1"
