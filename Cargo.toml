@@ -1,0 +1,14 @@
+[workspace]
+resolver = "2"
+members = ["crates/domain", "crates/application"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/mikezm/rust-audio-cast"
+
+[workspace.dependencies]
+async-trait = "0.1"
+thiserror = "2"
+mockall = "0.13"
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread"] }

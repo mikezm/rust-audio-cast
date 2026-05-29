@@ -1,0 +1,17 @@
+[package]
+name = "application"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Use cases orchestrating the domain through its ports. Depends only on `domain`."
+
+[dependencies]
+domain = { path = "../domain" }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+# Enable the domain's `mock` feature only for tests, so Mock* ports are available
+# here without leaking mockall into normal builds.
+domain = { path = "../domain", features = ["mock"] }
+tokio = { workspace = true }
