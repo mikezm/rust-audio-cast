@@ -90,6 +90,26 @@ the UI. Configuration lives in `config.toml` (USB device name, bind address, sam
 rate, optional default Chromecast UUID); the stream URL is built from the
 auto-detected local IP, so nothing is hard-coded to your network.
 
+### Backends: fake vs. live
+
+`config.toml`'s `backend` (or env `AUDIOCAST_BACKEND`) selects the adapters:
+
+- `fake` (default) — in-memory cast + a static device list. Runs anywhere, no hardware.
+- `live` — real Chromecast control (`rust_cast`) + LAN discovery (`mdns-sd`). The
+  audio is still the synthetic 440 Hz tone until the cpal USB capture lands, so this
+  lets you validate casting end-to-end from any dev machine before wiring up the
+  turntable:
+
+  ```sh
+  AUDIOCAST_BACKEND=live cargo run
+  # open http://localhost:8080, Rescan, pick your speaker, Play
+  ```
+
+  On macOS the binary needs **Local Network** permission (System Settings → Privacy &
+  Security → Local Network) for mDNS discovery to see devices, and you may get a
+  firewall prompt to **allow incoming connections** so the Chromecast can fetch the
+  stream. Both are one-time grants.
+
 ## Deploy as a service
 
 Run the binary as a systemd service under a user in the `audio` group — this is the
