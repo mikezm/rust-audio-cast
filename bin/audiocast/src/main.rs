@@ -11,13 +11,13 @@ use std::time::Duration;
 
 use audio_adapter::AudioHandle;
 use bff::{AppState, AudioStreamProvider};
-use config::{Backend, Config};
+use config::{AudioBackend, Backend, Config};
 use domain::{
     AudioFormat, CastController, CastSession, DeviceDiscovery, StreamUrl,
 };
 use infrastructure::{
-    InMemoryCastController, MdnsDiscovery, RustCastController, StaticDiscovery,
-    SyntheticAudioStream,
+    CpalAudioStream, InMemoryCastController, MdnsDiscovery, PcmSource, RustCastController,
+    StaticDiscovery, SyntheticAudioStream,
 };
 use tokio::net::TcpListener;
 use tokio::sync::Mutex;
@@ -32,14 +32,22 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let config = Config::load();
-    let format = AudioFormat {
+    let requested = AudioFormat {
         sample_rate: config.sample_rate,
         channels: config.channels,
         bits_per_sample: 16,
     };
 
-    // Audio is the synthetic tone until the cpal capture lands (Chunk D).
-    let audio = SyntheticAudioStream::start(format);
+    // Audio source: synthetic tone, or real USB capture (per config / env).
+    let audio: Arc<dyn PcmSource> = match config.audio {
+        AudioBackend::Synthetic => SyntheticAudioStream::start(requested),
+        AudioBackend::Capture => CpalAudioStream::start(config.usb_device_name.clone())?,
+    };
+    tracing::info!(audio = ?config.audio, "audio backend");
+
+    // The real device may not honor the requested rate/channels, so the header
+    // and stream URL follow the source's *actual* format.
+    let format = audio.format();
     let audio_provider: Arc<dyn AudioStreamProvider> = Arc::new(AudioHandle(audio));
 
     // Control + discovery: fakes, or real rust_cast/mdns, per config.

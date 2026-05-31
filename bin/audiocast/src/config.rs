@@ -2,14 +2,26 @@ use std::path::Path;
 
 use serde::Deserialize;
 
-/// Which adapter backend to wire up.
+/// Which control/discovery backend to wire up.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Backend {
     /// In-memory cast + static device list. No hardware needed.
     Fake,
-    /// Real rust_cast control + mdns-sd discovery (audio still synthetic).
+    /// Real rust_cast control + mdns-sd discovery.
     Live,
+}
+
+/// Which audio source to capture from. Chosen independently of the control
+/// backend, so you can cast a real turntable while testing, or stream the
+/// synthetic tone with no USB device attached.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AudioBackend {
+    /// 440 Hz sine tone. No hardware needed.
+    Synthetic,
+    /// Real USB capture via cpal/ALSA.
+    Capture,
 }
 
 /// Runtime configuration. Every field has a default, so a missing config file
@@ -23,6 +35,7 @@ pub struct Config {
     pub channels: u16,
     pub discovery_timeout_secs: u64,
     pub backend: Backend,
+    pub audio: AudioBackend,
     pub default_cast_uuid: Option<String>,
     pub advertised_ip: Option<String>,
 }
@@ -36,6 +49,7 @@ impl Default for Config {
             channels: 2,
             discovery_timeout_secs: 4,
             backend: Backend::Fake,
+            audio: AudioBackend::Synthetic,
             default_cast_uuid: None,
             advertised_ip: None,
         }
@@ -45,13 +59,20 @@ impl Default for Config {
 impl Config {
     /// Resolve config from, in order: `$AUDIOCAST_CONFIG`,
     /// `/etc/audiocast/config.toml`, `./config.toml`, then built-in defaults.
-    /// `AUDIOCAST_BACKEND=live|fake` overrides the backend for quick testing.
+    /// `AUDIOCAST_BACKEND=live|fake` and `AUDIOCAST_AUDIO=capture|synthetic`
+    /// override the respective backends for quick testing.
     pub fn load() -> Self {
         let mut config = Self::from_sources();
         if let Ok(b) = std::env::var("AUDIOCAST_BACKEND") {
             config.backend = match b.to_lowercase().as_str() {
                 "live" => Backend::Live,
                 _ => Backend::Fake,
+            };
+        }
+        if let Ok(a) = std::env::var("AUDIOCAST_AUDIO") {
+            config.audio = match a.to_lowercase().as_str() {
+                "capture" => AudioBackend::Capture,
+                _ => AudioBackend::Synthetic,
             };
         }
         config

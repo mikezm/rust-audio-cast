@@ -14,3 +14,4 @@ bytes = { workspace = true }
 tracing = { workspace = true }
 rust_cast = "0.21.0"
 mdns-sd = "0.20.0"
+cpal = "0.17"
