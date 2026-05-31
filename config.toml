@@ -13,12 +13,17 @@ bind_addr = "0.0.0.0:8080"
 sample_rate = 44100
 channels = 2
 
-# Adapter backend:
+# Control/discovery backend:
 #   "fake" — in-memory cast + static device list (no hardware).
 #   "live" — real Chromecast control (rust_cast) + LAN discovery (mdns-sd).
-#            Audio is still the synthetic tone until cpal capture lands.
 # Override at runtime with AUDIOCAST_BACKEND=live.
 backend = "fake"
+
+# Audio source (chosen independently of `backend`):
+#   "synthetic" — 440 Hz test tone, no USB device needed.
+#   "capture"   — real USB capture via cpal/ALSA (uses `usb_device_name` above).
+# Override at runtime with AUDIOCAST_AUDIO=capture.
+audio = "synthetic"
 
 # How long an mDNS discovery sweep runs.
 discovery_timeout_secs = 4

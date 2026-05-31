@@ -6,6 +6,8 @@ use bytes::Bytes;
 use domain::{AudioFormat, AudioSource};
 use tokio::sync::broadcast;
 
+use crate::pcm_source::PcmSource;
+
 const FRAMES_PER_CHUNK: usize = 1024;
 const TONE_HZ: f32 = 440.0;
 const AMPLITUDE: f32 = 0.2;
@@ -48,6 +50,16 @@ impl SyntheticAudioStream {
 impl AudioSource for SyntheticAudioStream {
     fn format(&self) -> AudioFormat {
         self.format
+    }
+}
+
+impl PcmSource for SyntheticAudioStream {
+    fn format(&self) -> AudioFormat {
+        self.format
+    }
+
+    fn subscribe(&self) -> broadcast::Receiver<Bytes> {
+        self.tx.subscribe()
     }
 }
 

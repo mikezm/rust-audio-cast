@@ -5,14 +5,16 @@ use bytes::Bytes;
 use domain::AudioFormat;
 use futures::stream::BoxStream;
 use futures::StreamExt;
-use infrastructure::SyntheticAudioStream;
+use infrastructure::PcmSource;
 use tokio_stream::wrappers::BroadcastStream;
 
-/// Composition-root glue adapting the infrastructure audio source to the BFF's
+/// Composition-root glue adapting an infrastructure audio source to the BFF's
 /// `AudioStreamProvider` port. A local newtype keeps both adapter crates
 /// independent of each other (the trait lives in `bff`, the source in
-/// `infrastructure`) while satisfying the orphan rule.
-pub struct AudioHandle(pub Arc<SyntheticAudioStream>);
+/// `infrastructure`) while satisfying the orphan rule. The source is a
+/// `dyn PcmSource`, so the synthetic tone and the real cpal capture are
+/// interchangeable here.
+pub struct AudioHandle(pub Arc<dyn PcmSource>);
 
 impl AudioStreamProvider for AudioHandle {
     fn format(&self) -> AudioFormat {
