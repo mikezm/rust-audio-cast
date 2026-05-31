@@ -27,36 +27,62 @@ body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  overflow: hidden; /* panel is fixed-size; only the speaker list scrolls */
 }
 
+/* Fits the 480x320 landscape panel; on a phone it just centers. */
 .app {
-  max-width: 560px;
+  max-width: 720px;
+  height: 100%;
   margin: 0 auto;
-  min-height: 100%;
-  padding: max(16px, env(safe-area-inset-top)) 16px 24px;
+  padding: max(10px, env(safe-area-inset-top)) 14px 12px;
+}
+
+.view {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
+.view--hidden {
+  display: none;
+}
+
+/* Top bar: small Speakers button, current speaker, state badge. */
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
 }
 
 .topbar h1 {
-  font-size: 1.5rem;
+  font-size: 1.05rem;
   margin: 0;
   letter-spacing: 0.5px;
+  flex: 1 1 auto;
+  text-align: center;
+}
+
+.nowon {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .badge {
-  font-size: 0.8rem;
+  flex: 0 0 auto;
+  font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  padding: 6px 12px;
+  padding: 4px 9px;
   border-radius: 999px;
   background: var(--panel-2);
   color: var(--muted);
@@ -72,93 +98,20 @@ body {
   color: #8ab4ff;
 }
 
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 16px;
-}
-
-.panel__head {
+/* Transport: two modest, fixed-size buttons centered with a big gap between
+   them, so they never crowd each other on the imprecise panel. */
+.transport {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.panel__head h2 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--muted);
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-/* Speaker list */
-.devices {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.devices__empty {
-  color: var(--muted);
-  padding: 12px 4px;
-}
-
-.device {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  text-align: left;
-  background: var(--panel-2);
-  color: var(--text);
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 16px;
-  font-size: 1.05rem;
-  cursor: pointer;
-}
-
-.device[aria-selected="true"] {
-  border-color: var(--accent);
-}
-
-.device__name {
-  font-weight: 600;
-}
-
-.device__model {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.device__check {
-  margin-left: auto;
-  color: var(--accent);
-  font-size: 1.2rem;
-  opacity: 0;
-}
-
-.device[aria-selected="true"] .device__check {
-  opacity: 1;
-}
-
-/* Big transport buttons */
-.controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  justify-content: center;
+  gap: 36px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .bigbtn {
+  width: 130px;
+  height: 96px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -166,15 +119,14 @@ body {
   gap: 6px;
   border: none;
   border-radius: 18px;
-  padding: 28px 0;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #0c0f14;
   cursor: pointer;
 }
 
 .bigbtn__glyph {
-  font-size: 2rem;
+  font-size: 1.9rem;
   line-height: 1;
 }
 
@@ -193,26 +145,43 @@ body {
 }
 
 .bigbtn:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: default;
 }
 
-/* Volume */
-.volume__label {
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-  font-weight: 600;
-}
-
-.volume__row {
+/* Volume: mute + slider + percent on one row. */
+.volume {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 8px 12px;
+  flex: 0 0 auto;
+}
+
+.mutebtn {
+  flex: 0 0 auto;
+  padding: 8px 16px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mutebtn[aria-pressed="true"] {
+  background: rgba(255, 90, 95, 0.18);
+  color: var(--stop);
+  border-color: transparent;
 }
 
 .slider {
-  flex: 1;
-  height: 36px;
+  flex: 1 1 auto;
+  height: 34px;
   appearance: none;
   -webkit-appearance: none;
   background: transparent;
@@ -255,15 +224,42 @@ body {
   background: var(--muted);
 }
 
-/* Icon / utility buttons */
-.iconbtn {
+.volume__label {
+  flex: 0 0 auto;
+  min-width: 3.5ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Small "Speakers" button in the top bar -> opens the picker page. */
+.findbtn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.findbtn:active {
+  background: var(--line);
+}
+
+/* Icon buttons (back / rescan) */
+.iconbtn {
+  flex: 0 0 auto;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   min-width: 44px;
-  min-height: 44px;
-  font-size: 1.2rem;
+  min-height: 40px;
+  font-size: 1.3rem;
+  line-height: 1;
   cursor: pointer;
 }
 
@@ -271,26 +267,87 @@ body {
   background: var(--line);
 }
 
-.iconbtn--wide {
-  padding: 0 18px;
-  font-size: 1rem;
+/* Speaker list — the only scrolling region. */
+.devices {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.devices__empty {
+  color: var(--muted);
+  padding: 12px 4px;
+}
+
+.device {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+.device[aria-selected="true"] {
+  border-color: var(--accent);
+}
+
+.device__name {
   font-weight: 600;
 }
 
-.iconbtn[aria-pressed="true"] {
-  background: rgba(255, 90, 95, 0.18);
-  color: var(--stop);
-  border-color: transparent;
+.device__model {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
 }
 
-/* Toast / status line */
+.device__check {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 1.2rem;
+  opacity: 0;
+}
+
+.device[aria-selected="true"] .device__check {
+  opacity: 1;
+}
+
+/* Toast / status line (overlay so it doesn't change layout height). */
 .toast {
-  min-height: 1.2em;
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  max-width: 90%;
   margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--panel-2);
   text-align: center;
   color: var(--muted);
-  font-size: 0.9rem;
-  transition: opacity 0.3s;
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.toast:not(:empty) {
+  opacity: 1;
 }
 
 .toast--error {
