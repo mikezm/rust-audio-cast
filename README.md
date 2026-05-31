@@ -112,22 +112,30 @@ auto-detected local IP, so nothing is hard-coded to your network.
 
 ## Deploy as a service
 
-Run the binary as a systemd service under a user in the `audio` group — this is the
-fix for the original USB-permission bug:
+One script does the whole install on the Pi — build, dedicated service user, binary +
+UI + config, systemd service, and the Chromium kiosk:
 
-```ini
-# deploy/audiocast.service
-[Service]
-User=audiocast
-SupplementaryGroups=audio                 # grants ALSA /dev/snd access
-AmbientCapabilities=CAP_NET_BIND_SERVICE   # if binding :80
-ExecStart=/usr/local/bin/rust-audio-cast
-Restart=on-failure
+```sh
+sudo deploy/install.sh
 ```
 
-The Pi's touchscreen shows the same web UI full-screen via Chromium kiosk mode,
-launched from a desktop icon. See `deploy/` for the unit file, kiosk launcher, and
-install script.
+It is idempotent, so re-running after `git pull` redeploys (and preserves
+`/etc/audiocast/config.toml`). What it sets up:
+
+- The binary runs as a **systemd service** under the dedicated `audiocast` user, which
+  is a member of the `audio` group (`SupplementaryGroups=audio`) — this is the
+  structural fix for the original USB-permission bug. The service reads its config from
+  `/etc/audiocast/config.toml` (`backend = "live"`, `audio = "capture"`).
+- The static UI is installed to `/usr/share/audiocast/www` and served via the absolute
+  `web_root` in the config, so it works regardless of the service's working directory.
+- The Pi's touchscreen shows the UI full-screen via **Chromium kiosk** (`deploy/kiosk.sh`),
+  launched from an "Audio Cast" desktop icon and auto-started at login. The kiosk assumes
+  an **X11** session (which the SPI-display setup uses) so the `xset` screen-blank
+  disabling applies.
+
+See `deploy/` for the unit file (`audiocast.service`), kiosk launcher (`kiosk.sh`,
+`audiocast-kiosk.desktop`), production config (`config.toml`), and the installer.
+Useful afterwards: `systemctl status audiocast` and `journalctl -u audiocast -f`.
 
 ## API
 

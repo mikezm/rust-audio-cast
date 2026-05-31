@@ -32,6 +32,11 @@ audio = "synthetic"
 # How long an mDNS discovery sweep runs.
 discovery_timeout_secs = 4
 
+# Directory the static touch UI is served from. Relative paths resolve against
+# the process working directory, so for the systemd service use an absolute path
+# (the installer sets this to /usr/share/audiocast/www).
+web_root = "www"
+
 # Optional: pre-select a Chromecast by UUID on startup.
 # default_cast_uuid = ""
 

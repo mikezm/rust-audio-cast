@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Audio Cast
+Comment=Turntable → Chromecast control (touch UI)
+Exec=/usr/local/bin/audiocast-kiosk.sh
+Icon=audio-volume-high
+Terminal=false
+Categories=AudioVideo;

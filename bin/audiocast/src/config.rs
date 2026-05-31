@@ -36,6 +36,7 @@ pub struct Config {
     pub discovery_timeout_secs: u64,
     pub backend: Backend,
     pub audio: AudioBackend,
+    pub web_root: String,
     pub default_cast_uuid: Option<String>,
     pub advertised_ip: Option<String>,
 }
@@ -50,6 +51,7 @@ impl Default for Config {
             discovery_timeout_secs: 4,
             backend: Backend::Fake,
             audio: AudioBackend::Synthetic,
+            web_root: "www".to_string(),
             default_cast_uuid: None,
             advertised_ip: None,
         }
