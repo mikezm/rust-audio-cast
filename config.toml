@@ -2,8 +2,12 @@
 # and edit, or set AUDIOCAST_CONFIG to point at a file. All fields are optional;
 # omitted values fall back to these defaults.
 
-# Substring matched against input device names to pick the turntable input.
-usb_device_name = "USB Audio CODEC"
+# Substring matched against the input device name to pick the turntable input.
+# With the cpal/ALSA capture backend this is an ALSA PCM name, NOT a friendly
+# string: run once with `audio = "capture"` and read the `available=[...]`
+# warning to see the candidates. `plughw:CARD=<name>` is the most forgiving
+# (it auto-converts sample format/rate/channels).
+usb_device_name = "plughw:CARD=CODEC"
 
 # Address the HTTP server binds to. Use 0.0.0.0:80 on the Pi (with
 # CAP_NET_BIND_SERVICE); 8080 is a convenient default for local dev.
