@@ -1,0 +1,26 @@
+# Production config — installed to /etc/audiocast/config.toml (not overwritten
+# if one already exists). See the repo-root config.toml for full field docs.
+
+# ALSA PCM name of the turntable input (cpal exposes ALSA names, not friendly
+# strings). Confirm with: run once with audio="capture" and read the
+# `available=[...]` warning, or `arecord -l`. `plughw:CARD=<name>` is forgiving.
+usb_device_name = "plughw:CARD=CODEC"
+
+bind_addr = "0.0.0.0:8080"
+sample_rate = 44100
+channels = 2
+
+# Real Chromecast control + LAN discovery, and real USB capture.
+backend = "live"
+audio   = "capture"
+
+# Absolute path so the service finds the UI regardless of working directory.
+web_root = "/usr/share/audiocast/www"
+
+discovery_timeout_secs = 4
+
+# Optional: pre-select a Chromecast by UUID on startup.
+# default_cast_uuid = ""
+
+# Optional: override the IP advertised in the stream URL (else auto-detected).
+# advertised_ip = "192.168.1.50"

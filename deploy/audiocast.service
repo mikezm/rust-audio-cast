@@ -1,0 +1,24 @@
+[Unit]
+Description=Rust Audio Cast
+# Wait for the network and (best-effort) for sound devices to appear before we
+# start capturing.
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=audiocast
+# THE fix for the original www-data permission bug: membership in `audio`
+# grants access to the ALSA /dev/snd devices.
+SupplementaryGroups=audio
+Environment=AUDIOCAST_CONFIG=/etc/audiocast/config.toml
+ExecStart=/usr/local/bin/rust-audio-cast
+Restart=on-failure
+RestartSec=2
+
+# To serve on port 80 instead of :8080, set bind_addr = "0.0.0.0:80" in the
+# config and uncomment the next line (binding <1024 needs this capability):
+#AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target

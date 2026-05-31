@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -21,4 +22,8 @@ pub struct AppState {
     pub stream_url: StreamUrl,
     pub format: AudioFormat,
     pub discovery_timeout: Duration,
+    /// Directory the static touch UI is served from. Relative paths resolve
+    /// against the process cwd, so under a systemd service this should be an
+    /// absolute path (e.g. `/usr/share/audiocast/www`).
+    pub web_root: PathBuf,
 }

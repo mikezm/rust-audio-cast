@@ -1,6 +1,5 @@
 //! Composition root: load config, construct adapters, wire them into the BFF,
-//! and serve. This is the only place that knows about concrete adapters; in
-//! Chunk B those are the fakes from `infrastructure`.
+//! and serve. This is the only place that knows about concrete adapters.
 
 mod audio_adapter;
 mod config;
@@ -12,9 +11,7 @@ use std::time::Duration;
 use audio_adapter::AudioHandle;
 use bff::{AppState, AudioStreamProvider};
 use config::{AudioBackend, Backend, Config};
-use domain::{
-    AudioFormat, CastController, CastSession, DeviceDiscovery, StreamUrl,
-};
+use domain::{AudioFormat, CastController, CastSession, DeviceDiscovery, StreamUrl};
 use infrastructure::{
     CpalAudioStream, InMemoryCastController, MdnsDiscovery, PcmSource, RustCastController,
     StaticDiscovery, SyntheticAudioStream,
@@ -76,6 +73,7 @@ async fn main() -> anyhow::Result<()> {
         stream_url,
         format,
         discovery_timeout: Duration::from_secs(config.discovery_timeout_secs),
+        web_root: config.web_root.clone().into(),
     };
 
     let app = bff::router(state);
@@ -98,11 +96,7 @@ fn build_stream_url(config: &Config) -> StreamUrl {
         .next()
         .and_then(|p| p.parse::<u16>().ok())
         .unwrap_or(8080);
-    let host = if port == 80 {
-        ip
-    } else {
-        format!("{ip}:{port}")
-    };
+    let host = if port == 80 { ip } else { format!("{ip}:{port}") };
     StreamUrl::new(format!("http://{host}/audio-stream"))
 }
 

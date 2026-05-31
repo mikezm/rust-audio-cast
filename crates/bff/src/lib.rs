@@ -22,6 +22,10 @@ use tower_http::services::ServeDir;
 /// static touch UI served at `/` (SPA-style fallback). CORS is permissive to
 /// match the old flask-cors behavior (only relevant for cross-origin dev).
 pub fn router(state: AppState) -> Router {
+    // The UI directory is a router concern; capture it before `state` is moved
+    // into the handlers via `.with_state`.
+    let web_root = state.web_root.clone();
+
     Router::new()
         .route("/status", get(handlers::status))
         .route("/list-casts", get(handlers::list_casts))
@@ -34,7 +38,7 @@ pub fn router(state: AppState) -> Router {
         .route("/volume-mute", post(handlers::volume_mute))
         .route("/volume-unmute", post(handlers::volume_unmute))
         .route("/audio-stream", get(stream::audio_stream))
-        .fallback_service(ServeDir::new("www").append_index_html_on_directories(true))
+        .fallback_service(ServeDir::new(&web_root).append_index_html_on_directories(true))
         .layer(CorsLayer::permissive())
         .with_state(state)
 }
