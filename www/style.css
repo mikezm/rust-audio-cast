@@ -353,3 +353,18 @@ body {
 .toast--error {
   color: var(--stop);
 }
+
+/* Idle blackout overlay (kiosk only). A full-viewport black layer painted over
+   the page when idle — the in-page equivalent of a screen blank, since the X
+   screensaver can't draw over the fullscreen kiosk window. The next touch
+   removes it. */
+.screensaver {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: #000;
+}
+
+.screensaver[hidden] {
+  display: none;
+}
