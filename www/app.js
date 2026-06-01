@@ -2,12 +2,21 @@
 
 // Touch UI for rust-audio-cast. Dependency-free: talks to the same-origin REST
 // API the BFF serves, polls /status to stay in sync with changes made
-// elsewhere (e.g. another phone), and avoids fighting the user mid-drag.
+// elsewhere (e.g. a phone), and avoids fighting the user mid-drag.
+//
+// Two views fit the small panel: a compact main view (current speaker +
+// transport + volume) and a separate speaker-picker page reached via "Find
+// speakers". Picking a speaker returns to the main view.
 
 const POLL_MS = 2000;
 
 const el = {
+  viewMain: document.getElementById("view-main"),
+  viewSpeakers: document.getElementById("view-speakers"),
   stateBadge: document.getElementById("state-badge"),
+  nowonName: document.getElementById("nowon-name"),
+  find: document.getElementById("find-btn"),
+  back: document.getElementById("back-btn"),
   refresh: document.getElementById("refresh-btn"),
   deviceList: document.getElementById("device-list"),
   play: document.getElementById("play-btn"),
@@ -20,6 +29,7 @@ const el = {
 
 let devices = [];
 let selectedUuid = null;
+let selectedName = null;
 let muted = false;
 let draggingVolume = false;
 let toastTimer = null;
@@ -38,7 +48,6 @@ async function api(path, method = "GET") {
     }
     throw new Error(detail);
   }
-  // Some endpoints return no body; guard JSON parsing.
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
@@ -62,6 +71,18 @@ async function run(action) {
     toast(e.message || "Request failed", true);
     return null;
   }
+}
+
+// --- View switching -------------------------------------------------------
+
+function showSpeakers() {
+  el.viewMain.classList.add("view--hidden");
+  el.viewSpeakers.classList.remove("view--hidden");
+}
+
+function showMain() {
+  el.viewSpeakers.classList.add("view--hidden");
+  el.viewMain.classList.remove("view--hidden");
 }
 
 // --- Rendering ------------------------------------------------------------
@@ -88,16 +109,29 @@ function renderDevices() {
       <span class="device__check">✓</span>`;
     btn.querySelector(".device__name").textContent = d.name;
     btn.querySelector(".device__model").textContent = d.model || "";
-    btn.addEventListener("click", () => selectDevice(d.uuid));
+    btn.addEventListener("click", () => selectDevice(d.uuid, d.name));
     li.appendChild(btn);
     el.deviceList.appendChild(li);
   }
 }
 
-function selectDevice(uuid) {
+// Tapping a speaker selects it and returns to the main view.
+function selectDevice(uuid, name) {
   selectedUuid = uuid;
-  renderDevices();
+  selectedName = name || nameForUuid(uuid);
+  updateNowOn();
   updateControls();
+  renderDevices();
+  showMain();
+}
+
+function nameForUuid(uuid) {
+  const d = devices.find((x) => x.uuid === uuid);
+  return d ? d.name : null;
+}
+
+function updateNowOn() {
+  el.nowonName.textContent = selectedName || "No speaker";
 }
 
 function setBadge(state) {
@@ -137,9 +171,13 @@ async function loadDevices(forceRescan = false) {
   );
   if (!list) return;
   devices = list;
-  // Auto-rescan once if the cache is empty.
-  if (devices.length === 0 && !forceRescan) {
-    return loadDevices(true);
+  // Refresh the selected speaker's display name if we now know it.
+  if (selectedUuid) {
+    const name = nameForUuid(selectedUuid);
+    if (name) {
+      selectedName = name;
+      updateNowOn();
+    }
   }
   renderDevices();
   updateControls();
@@ -148,7 +186,11 @@ async function loadDevices(forceRescan = false) {
 function applyStatus(status) {
   if (!status) return;
   setBadge(status.state);
-  if (status.device) selectedUuid = status.device.uuid;
+  if (status.device) {
+    selectedUuid = status.device.uuid;
+    selectedName = status.device.name || nameForUuid(selectedUuid);
+    updateNowOn();
+  }
   setVolumeUi(Math.round((status.volume ?? 0) * 100));
   setMutedUi(!!status.muted);
   updateControls(status.state === "playing");
@@ -161,6 +203,15 @@ async function pollStatus() {
 }
 
 // --- Event wiring ---------------------------------------------------------
+
+// "Find speakers" opens the picker and kicks off a fresh scan.
+el.find.addEventListener("click", () => {
+  showSpeakers();
+  toast("Scanning…");
+  loadDevices(true).then(() => toast(""));
+});
+
+el.back.addEventListener("click", showMain);
 
 el.refresh.addEventListener("click", () => {
   toast("Scanning…");
@@ -199,9 +250,7 @@ el.slider.addEventListener("input", () => {
 el.slider.addEventListener("change", async () => {
   const level = Number(el.slider.value) / 100;
   draggingVolume = false;
-  const res = await run(() =>
-    api(`/set-volume/${level.toFixed(2)}`, "POST"),
-  );
+  const res = await run(() => api(`/set-volume/${level.toFixed(2)}`, "POST"));
   if (res && typeof res.volume === "number") {
     setMutedUi(false);
     setVolumeUi(Math.round(res.volume * 100));
@@ -210,5 +259,6 @@ el.slider.addEventListener("change", async () => {
 
 // --- Boot -----------------------------------------------------------------
 
+updateNowOn();
 loadDevices().then(pollStatus);
 setInterval(pollStatus, POLL_MS);
