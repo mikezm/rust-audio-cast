@@ -23,6 +23,8 @@ for BROWSER in chromium-browser chromium; do
       --noerrdialogs \
       --disable-infobars \
       --disable-session-crashed-bubble \
+      --no-first-run \
+      --password-store=basic \
       --check-for-update-interval=31536000 \
       --app="$URL"
   fi
