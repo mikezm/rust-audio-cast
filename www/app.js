@@ -7,8 +7,24 @@
 // Two views fit the small panel: a compact main view (current speaker +
 // transport + volume) and a separate speaker-picker page reached via "Find
 // speakers". Picking a speaker returns to the main view.
+//
+// Idle blackout: on the Pi kiosk (launched with ?kiosk), the page paints a
+// black overlay after AUDIOCAST_SLEEP_SECS of no input and clears it on the
+// next touch. This is the in-page equivalent of a screen blank — the X
+// screensaver can't draw over the fullscreen kiosk window, so we do it here.
+// Phones don't get it (they sleep on their own).
 
 const POLL_MS = 2000;
+
+// Kiosk-only idle blackout. The launcher passes ?kiosk and optionally
+// ?sleep=<seconds> (0 disables). Default 30 min.
+const params = new URLSearchParams(location.search);
+const KIOSK = params.has("kiosk");
+const SLEEP_MS = (() => {
+  const s = Number(params.get("sleep"));
+  if (Number.isFinite(s)) return s * 1000; // explicit value (0 disables)
+  return 30 * 60 * 1000; // default 30 min
+})();
 
 const el = {
   viewMain: document.getElementById("view-main"),
@@ -25,6 +41,7 @@ const el = {
   slider: document.getElementById("volume-slider"),
   volumeLabel: document.getElementById("volume-label"),
   toast: document.getElementById("toast"),
+  screensaver: document.getElementById("screensaver"),
 };
 
 let devices = [];
@@ -257,8 +274,47 @@ el.slider.addEventListener("change", async () => {
   }
 });
 
+// --- Idle blackout (kiosk only) -------------------------------------------
+
+let idleTimer = null;
+let asleep = false;
+
+function sleepScreen() {
+  asleep = true;
+  el.screensaver.hidden = false;
+}
+
+// Wake on any input. When dismissing the blackout, swallow that first event so
+// the tap that wakes the screen doesn't also trigger a control underneath.
+function wake(e) {
+  if (asleep) {
+    asleep = false;
+    el.screensaver.hidden = true;
+    if (e && e.cancelable) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+  resetIdle();
+}
+
+function resetIdle() {
+  clearTimeout(idleTimer);
+  if (SLEEP_MS > 0) idleTimer = setTimeout(sleepScreen, SLEEP_MS);
+}
+
+function initIdleBlackout() {
+  if (!KIOSK || SLEEP_MS <= 0) return;
+  // Capture phase so a wake-tap is intercepted before it reaches a button.
+  for (const evt of ["pointerdown", "touchstart", "mousedown", "keydown"]) {
+    window.addEventListener(evt, wake, { capture: true });
+  }
+  resetIdle();
+}
+
 // --- Boot -----------------------------------------------------------------
 
 updateNowOn();
 loadDevices().then(pollStatus);
 setInterval(pollStatus, POLL_MS);
+initIdleBlackout();

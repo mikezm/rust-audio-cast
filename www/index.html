@@ -58,6 +58,10 @@
       </section>
 
       <p id="toast" class="toast" role="status" aria-live="polite"></p>
+
+      <!-- Idle blackout overlay (kiosk only). Hidden by default; shown after
+           the inactivity timeout, dismissed by the next touch. -->
+      <div id="screensaver" class="screensaver" hidden></div>
     </main>
 
     <script src="/app.js"></script>
