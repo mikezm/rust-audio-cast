@@ -19,6 +19,11 @@ web_root = "/usr/share/audiocast/www"
 
 discovery_timeout_secs = 4
 
+# Stop casting after 2 minutes of continuous input silence (record finished).
+# 0 disables. See the repo-root config.toml for tuning the threshold.
+silence_stop_secs = 120
+silence_threshold = 0.005
+
 # Optional: pre-select a Chromecast by UUID on startup.
 # default_cast_uuid = ""
 

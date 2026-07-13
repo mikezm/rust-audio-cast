@@ -37,6 +37,16 @@ discovery_timeout_secs = 4
 # (the installer sets this to /usr/share/audiocast/www).
 web_root = "www"
 
+# Auto-stop casting after this many seconds of continuous input silence (e.g.
+# the record has finished and is spinning in the end groove). 0 disables.
+silence_stop_secs = 120
+
+# RMS level (fraction of full scale, 0.0–1.0) below which a second of input
+# counts as silent. 0.005 ≈ -46 dBFS: above a turntable's noise floor picked
+# up between records, comfortably below any program material. Raise it if a
+# noisy input never triggers auto-stop; lower it if quiet passages do.
+silence_threshold = 0.005
+
 # Optional: pre-select a Chromecast by UUID on startup.
 # default_cast_uuid = ""
 

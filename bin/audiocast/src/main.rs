@@ -3,6 +3,7 @@
 
 mod audio_adapter;
 mod config;
+mod silence;
 
 use std::net::IpAddr;
 use std::sync::Arc;
@@ -45,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
     // The real device may not honor the requested rate/channels, so the header
     // and stream URL follow the source's *actual* format.
     let format = audio.format();
-    let audio_provider: Arc<dyn AudioStreamProvider> = Arc::new(AudioHandle(audio));
+    let audio_provider: Arc<dyn AudioStreamProvider> = Arc::new(AudioHandle(audio.clone()));
 
     // Control + discovery: fakes, or real rust_cast/mdns, per config.
     let (cast, discovery): (Arc<dyn CastController>, Arc<dyn DeviceDiscovery>) =
@@ -75,6 +76,21 @@ async fn main() -> anyhow::Result<()> {
         discovery_timeout: Duration::from_secs(config.discovery_timeout_secs),
         web_root: config.web_root.clone().into(),
     };
+
+    if config.silence_stop_secs > 0 {
+        silence::spawn(
+            audio,
+            state.cast.clone(),
+            state.session.clone(),
+            config.silence_threshold,
+            Duration::from_secs(config.silence_stop_secs),
+        );
+        tracing::info!(
+            timeout_secs = config.silence_stop_secs,
+            threshold = config.silence_threshold,
+            "silence auto-stop enabled"
+        );
+    }
 
     let app = bff::router(state);
     let listener = TcpListener::bind(&config.bind_addr).await?;
