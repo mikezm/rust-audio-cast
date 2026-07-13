@@ -39,6 +39,12 @@ pub struct Config {
     pub web_root: String,
     pub default_cast_uuid: Option<String>,
     pub advertised_ip: Option<String>,
+    /// Stop an active cast after this many seconds of continuous input
+    /// silence (the record ran out). 0 disables auto-stop.
+    pub silence_stop_secs: u64,
+    /// RMS level (fraction of full scale, 0.0–1.0) below which a second of
+    /// audio counts as silent.
+    pub silence_threshold: f32,
 }
 
 impl Default for Config {
@@ -54,6 +60,8 @@ impl Default for Config {
             web_root: "www".to_string(),
             default_cast_uuid: None,
             advertised_ip: None,
+            silence_stop_secs: 120,
+            silence_threshold: 0.005,
         }
     }
 }
